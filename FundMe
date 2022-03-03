@@ -1,0 +1,125 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.9.0;
+// Safemath library is used to overcome overflow problem.
+// In solidity overflow problem means. When we use uint8 then after 255 it will start from 0.
+import "@chainlink/contracts/src/v0.6/vendor/SafeMathChainlink.sol";
+//import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+// In replacement of the import link we can use the whole interface as well. 
+interface AggregatorV3Interface {
+  function decimals() external view returns (uint8);
+
+  function description() external view returns (string memory);
+
+  function version() external view returns (uint256);
+
+  // getRoundData and latestRoundData should both raise "No data present"
+  // if they do not have data to report, instead of returning unset values
+  // which could be misinterpreted as actual reported values.
+  function getRoundData(uint80 _roundId)
+    external
+    view
+    returns (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    );
+
+  function latestRoundData()
+    external
+    view
+    returns (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    );
+}
+
+contract FundMe{
+    //Mapping from the senders address to the amount paid. 
+    //In this we are paying some amount to the contract. Then retrieving that amount. 
+    mapping(address => uint256) public addressToAmount;
+    // Declare the owner of the contract. To withdrad the funds. 
+    address public owner;
+    // Who ever deploy the contract will be the owner of this contract. 
+    constructor() public{
+        owner = msg.sender;
+
+    }
+
+    //For reseting the funders accounts. 
+    address[] public funders;
+
+    // Using SafeMath library.
+    using SafeMathChainlink for uint256;
+   // This function is used to pay the funda
+    function fund() public payable{
+        // We want to put condition that no one could send less than 50$.
+        uint256 minimumAmount = 50;
+// Require will put condtion to make it require the minimum amount. 
+        require(getConversionRate(msg.value) >= minimumAmount,"Kindly, spend more Ether!!");
+        addressToAmount[msg.sender] += msg.value;
+
+        //Add funder to funder array.
+        funders.push(msg.sender);
+
+    }
+    // To get version of the contract. To interact with other contracts, we have to locate ABI of that contract.
+    
+    function getVersion() public view returns(uint256){
+        // We will use address of specific contract to interact with it. 
+        AggregatorV3Interface priceVersion = AggregatorV3Interface(0x8A753747A1Fa494EC906cE90E9f37563A8AF630e);
+        // return the version fucntion from interface as mentioned above.  
+        return priceVersion.version();
+
+    }
+
+    function getPrice() public view returns(uint256){
+        AggregatorV3Interface priceFeeds = AggregatorV3Interface(0x8A753747A1Fa494EC906cE90E9f37563A8AF630e);
+        //Tupples variables with different types. 
+        (,int256 answer,,,) = priceFeeds.latestRoundData();
+        return uint256(answer*10000000000);
+
+        // 4,072.53076693   its an 8 decimal value as mentioned in the interface. 
+    }
+
+    //1000000000 1 gwei
+
+    //To get the converion rate So, we can put condition on the amount to be trnasfered. 
+    function getConversionRate(uint256 ethAmount) public view returns (uint256){
+        uint256 ethPrice = getPrice();
+        uint256 ethAmountInUSD = (ethPrice * ethAmount)/1000000000000000000;
+        return ethAmountInUSD;
+        //0.000003920160000000 Amount of 1 gwie in USD
+    }
+
+    //Modifier are used to change the behaviour of a function.
+    //Instead of writing require statements again and again. Use modifier
+    modifier onlyOwner{
+        //Condition. 
+        require(msg.sender == owner); 
+        //If condition meet then excecute the rest of the code. 
+        _;
+    }
+
+    // We want to withdraw funds from the contracrt. 
+    function withdraw() public onlyOwner payable{
+        //This keyword will call the contract currently we are using.
+        // Only owner can withdraw. 
+      //  require(msg.sender == owner);  onlyOwner modifier used in place of this. 
+        msg.sender.transfer(address(this).balance);
+
+        //Resetting the balance of funders to zero. 
+        for(uint256 funderIndex=0; funderIndex < funders.length;funderIndex++){
+            address funder = funders[funderIndex];
+            //Resetting the balance of funders to zero. 
+            addressToAmount[funder] = 0;
+        }
+        //Resetting the funders array. 
+        funders = new address[](0);
+    } 
+}

@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6.0 <0.9.0;
+
+contract SimpleStorage{
+
+    // fNumber will be initialized to 0!
+    // Accessability of These as default is internal
+    // Accessabilities are of 4 types. Internal, external, public, private
+    uint256 fNumber;
+    uint256 fuint = 5;
+    bool fbool = true;
+    address faddress = 0xBFE122f8b4946d0Ad2d4AdA93Fd834794B8DCc47;
+    int256 fint = -5;
+    string fstring = "String";
+    bytes32 fbyte = "cat";
+    struct People{
+        string fName;
+        uint256 fNumber;
+    }
+
+    People[] public person;
+    // Mapping used to search keys. We have to declare the mappings in the respective function as well. 
+    mapping(string => uint256) public getfNumber;
+
+
+    function store(uint256 _fNumber) public{
+        fNumber = _fNumber;
+    }
+// There two type of functions view and pure. Pure having computations in it. No return value.
+// Whether the view function return some value. 
+// View functions dont make a state change. 
+    function retrieve() public view returns(uint256) {
+        return fNumber;
+    }
+ //   function retrieveP(uint256 fNumber) public pure{
+   //    fNumber + fNumber;
+  //  }
+   // Memory and storage both used for storing string.
+   //Memory for storage during execution and storage for storing perm.
+
+    function addPerson(string memory _fName, uint256 _fNumber) public{
+        person.push(People(_fName, _fNumber));
+        getfNumber[_fName] = _fNumber;
+    }
+
+
+}

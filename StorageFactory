@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.0;
+import "./SimpleStorage.sol";
+//Using inheritence to use all the functionalities of simple storage contract. 
+//Only use "is SimpleStorage" for inheritence. 
+contract StorageFactory is SimpleStorage{
+    // This contract array is to keep track of deployed simplestorage contracts.
+    SimpleStorage[] public simpleStorageArray;
+
+    //Deploy SimpleStorage contract from this contract.
+    function CreateSimpleStorage() public{
+        // Create the object of the contract. 
+        SimpleStorage simpleStorage = new SimpleStorage();
+        // Add the deployed contract to the array of contract type. 
+        simpleStorageArray.push(simpleStorage);
+    }
+
+    //Now we want to interact with the contract.
+    function sfStore(uint256 _simplestorageindex, uint256 _simplestoragefNumber) public {
+        //Address
+        //ABI
+        // Calling the simplestorage contract with the specific address. 
+        SimpleStorage simplestorage = SimpleStorage(address(simpleStorageArray[_simplestorageindex]));
+        //Storing number in the simple storage contract. 
+        simplestorage.store(_simplestoragefNumber);
+
+    }
+    //Retrieving data from the simple storage contract. 
+    function sfretrieve(uint256 _simplestorageindex) public view returns(uint256){
+        return SimpleStorage(address(simpleStorageArray[_simplestorageindex])).retrieve();
+    }
+
+    //Note: When we deploy a contract we deploy all the functionalities of that contract. But using interfaces we can interact with the contract without deploying it. 
+
+
+
+}
